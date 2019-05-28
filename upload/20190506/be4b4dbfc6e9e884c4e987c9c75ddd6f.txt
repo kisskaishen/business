@@ -1,0 +1,21 @@
+订阅号注册登录邮箱
+kisskaishen@163.com
+kisskai1995
+
+APPID: wx70b923c1c2b790cc
+APPSecret: 7769f240b91dd492899b2f56a85dd916
+
+小程序邮箱
+kisskaishen1@163.com
+kisskai1995
+
+APPID: wx2cf97e63f0d8d865
+APPSecret:e8b7d383e47e95c4427288124652c95b
+
+
+腾讯位置定位服务：https://lbs.qq.com/
+登陆选取公众号授权登陆=>深圳途乐小游，已关联13798238693
+
+
+腾讯云
+0的离心率扫码
