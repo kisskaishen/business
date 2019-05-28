@@ -9,8 +9,8 @@
 namespace app\index\controller;
 
 
+use app\index\model\GoodsCommonModel;
 use app\index\model\GoodsModel;
-use app\index\model\GoodsSpecModel;
 use app\index\model\SpecModel;
 use app\index\model\SpecValueModel;
 use think\App;
@@ -19,18 +19,18 @@ use think\Db;
 
 class Goods extends Controller
 {
-    private $goods_model = [];
+    private $goods_common_model = [];
     private $spec_model = [];
     private $spec_value_model = [];
-    private $goods_spec_model = [];
+    private $goods_model = [];
 
     public function __construct(App $app = null)
     {
         parent::__construct($app);
-        $this->goods_model = new GoodsModel();
+        $this->goods_common_model = new GoodsCommonModel();
         $this->spec_model = new SpecModel();
         $this->spec_value_model = new SpecValueModel();
-        $this->goods_spec_model = new GoodsSpecModel();
+        $this->goods_model = new GoodsModel();
     }
 
     public function index()
@@ -45,7 +45,7 @@ class Goods extends Controller
         $where = [];
         $join = [];
         $field = '*';
-        $order = 'goods_id desc';
+        $order = 'goods_common_id desc';
         if (!empty($data['goods_name'])) {
             $where[] = ['goods_name', 'like', '%' . $data['goods_name'] . '%'];
         }
@@ -53,18 +53,18 @@ class Goods extends Controller
             $where[] = ['goods_status', 'like', '%' . $data['goods_status'] . '%'];
         }
 
-        $res = $this->goods_model->getList($where, $join, $field, $order);
+        $res = $this->goods_common_model->getList($where, $join, $field, $order);
         return return_info(200, 'success', $res);
     }
 
     public function goods_detail()
     {
-        $goods_id = input('goods_id');
+        $goods_common_id = input('goods_common_id');
         $where = [];
-        if (!empty($goods_id)) {
-            $where['goods_id'] = $goods_id;
-            $res = $this->goods_model->getInfo($where);
-            if (!res) {
+        if (!empty($goods_common_id)) {
+            $where['goods_common_id'] = $goods_common_id;
+            $res = $this->goods_common_model->getInfo($where);
+            if (!$res) {
                 return return_info(300, '未找到信息');
             } else {
                 return return_info(200, 'success', $res);
@@ -76,7 +76,7 @@ class Goods extends Controller
 
     public function add_edit_goods()
     {
-        $goods_id = input('goods_id');
+        $goods_common_id = input('goods_common_id');
 
         $data['goods_name'] = input('goods_name');
         $data['goods_detail'] = input('goods_detail');
@@ -89,7 +89,6 @@ class Goods extends Controller
         $data['goods_status'] = input('goods_status');
         $data['remark'] = input('remark');
 
-
         $specData = json_decode(input('goods_spec'), true);
 
 
@@ -98,9 +97,9 @@ class Goods extends Controller
                 return return_info(300, '请填写完整信息');
             }
         }
-        if (!empty($goods_id)) {
+        if (!empty($goods_common_id)) {
             // 修改
-            $res = $this->goods_model->updateDate($data);
+            $res = $this->goods_common_model->updateDate($data);
             if (!$res) {
                 return return_info(300, '编辑失败');
             }
@@ -108,23 +107,12 @@ class Goods extends Controller
 
         } else {
             // 添加
-            $res = $this->goods_model->insertData($data);
+            $res = $this->goods_common_model->insertData($data);
 
 
             if (!$res) {
                 return return_info(300, '添加失败');
             }
-            // 添加到商品规格表里面
-//            $specData['goods_id'] = $res;
-//            $specData['goods_name'] = input('goods_name');
-//            $specData['goods_stock'] = input('goods_stock');
-//            $specData['goods_sales'] = input('goods_sales');
-//            $specData['goods_spec'] = input('goods_spec');
-//            $specData['goods_spec_img'] = input('goods_spec_img');
-//            $specData['goods_sales'] = input('goods_sales');
-//            $specData['goods_spec_price'] = input('goods_spec_price');
-
-//            var_dump(Db::getSqlLast());
 
             $goodsSpec = $this->goods_spec_model->insertAllData($specData);
             if ($goodsSpec) {

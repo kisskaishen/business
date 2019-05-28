@@ -66,22 +66,34 @@ class Address extends Controller
         }
         $data = $post_error['data'];
         $data['is_default'] = $is_default;
+        $con = [];
+        $con[] = ['user_id','=',$data['user_id']];//只能改当前用户的地址
         if (!empty($address_id)) {
-            $data['address_id'] = $address_id;
-            $con[] = ['address_id','=',$address_id];
+            $con[] = ['address_id','neq',$address_id];
         }
-
-        if($is_default == 1){//设置为默认值，其他的就要为0
-            $con[] = ['is_default','=',1];
-            $res = $this->address_model->save(['is_default'=>0],$con);//默认地址只能有一个
-            if ($res) {
-                return return_info(200,'success',$res);
+        try{
+            Db::startTrans();//开启事务
+            if($is_default == 1){   //默认地址只能有一个，设置为默认值，其他的就要为0
+                $con[] = ['is_default','=',1];
+                if(!$this->address_model->save(['is_default'=>0],$con)){
+                    throw new \Exception('默认地址设置失败');//try..catch中报错的写法
+                }
             }
+
+            if (!empty($address_id)) {
+                $res = $this->address_model->save($data,[['address_id','=',$address_id]]);
+            }else{
+                $res = $this->address_model->addGetId($data);
+            }
+            if (!$res) {
+                throw new \Exception('操作失败');
+            }
+            Db::commit();
+        }catch (\Exception $e){
+            Db::rollback();
+            return return_info(300,$e->getMessage());//$e->getMessage()获取try..catch中的报错
         }
-        $res = $this->address_model->save($data);//save中含主键则是修改记录，不含则是添加记录
-        if ($res) {
-            return return_info(200,'success',$res);
-        }
+        return return_info(200,'success',$res);
     }
 
     /**

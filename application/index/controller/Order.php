@@ -12,14 +12,16 @@ namespace app\index\controller;
 use app\index\model\OrderModel;
 use think\App;
 use think\Controller;
+use app\index\logic\OrderLogic;
 
 class Order extends Controller
 {
     private $order_model = [];
+    private $order_login = [];
     public function __construct(App $app = null)
     {
         $this->order_model = new OrderModel();
-
+        $this->order_login = new OrderLogic();
         parent::__construct($app);
     }
 
@@ -45,5 +47,14 @@ class Order extends Controller
             return return_info();
         }
         return return_info(200,'success',$res);
+    }
+
+    /**
+     * 下单
+     */
+    public function set_order() {
+        $goods_id=input('goods_id');
+        $res = $this->order_login->check_goods();
+        var_dump($res);
     }
 }
