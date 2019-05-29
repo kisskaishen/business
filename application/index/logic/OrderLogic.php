@@ -13,6 +13,7 @@ use app\index\model\AddressModel;
 use app\index\model\GoodsModel;
 use app\index\model\OrderModel;
 use app\index\model\UserModel;
+use think\Db;
 
 class OrderLogic
 {
@@ -43,47 +44,53 @@ class OrderLogic
     /**
      * 检查登陆状态
      */
-    public function check_login()
+    public function check_login($user_id)
     {
-        $user_id = input('user_id');
+        $user_id = $user_id;
         if (empty($user_id)) {
-            return return_info(300, '请选登陆');
+            throw new \Exception("请选登陆");
         }
         $res = $this->user_model->where(['user_id', '=', $user_id])->find();
-        if ($res) {
-            return true;
+        if (!$res) {
+            throw new \Exception('用户不存在');
         }
+        return true;
     }
 
     /**
      * 检查商品库存等
      */
-    public function check_goods()
+    public function check_goods($goods_id,$goods_number)
     {
-        $goods_id = input('goods_id');
-        $goods_number = input('goods_numer');
+        $goods_id = $goods_id;
+        $goods_number = $goods_number;
 
         $is_exist = $this->goods_model->where('goods_id',$goods_id)->find();
-
         if (!$is_exist) {
-            return return_info('300','商品不存在');
+            throw new \Exception("商品不存在");
         }
+        if ($goods_number>$is_exist['goods_stock']) {
+            throw new \Exception("库存不足");
+        }
+        return true;
 
     }
 
     /**
      * 检查收货地址等
      */
-    public function check_address()
+    public function check_address(address_id)
     {
-        $address_id = input('address_id');
+        $address_id = $address_id;
         if (empty($address_id)) {
-            return return_info(300, '请先选择收货地址');
+            throw new \Exception('请先选择收货地址');
         }
         $res = $this->address_model->where(['address_id', '=', $address_id])->find();
-        if ($res) {
-            return true;
+        if (!$res) {
+            throw new \Exception('收货地址不存在');
         }
+        return true;
+
     }
 
 

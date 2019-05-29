@@ -12,6 +12,6 @@ use app\index\model\BaseModel;
 
 class UserModel extends BaseModel
 {
-    protected $pk = 'id';
+    protected $pk = 'user_id';
     protected $table = 'wap_user';
 }

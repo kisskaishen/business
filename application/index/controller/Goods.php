@@ -61,16 +61,22 @@ class Goods extends Controller
     {
         $goods_common_id = input('goods_common_id');
         $where = [];
+        $join = [];
         if (!empty($goods_common_id)) {
             $where['goods_common_id'] = $goods_common_id;
             $res = $this->goods_common_model->getInfo($where);
+            $specArr = $this->goods_model->getList($where);
+            foreach ($specArr as $k=>$v) {
+                $v['goods_spec'] = json_decode($v['goods_spec']);
+            }
+            $res['goods_spec'] = $specArr;
             if (!$res) {
-                return return_info(300, '未找到信息');
+                return return_info();
             } else {
                 return return_info(200, 'success', $res);
             }
         } else {
-            return return_info(300);
+            return return_info();
         }
     }
 
@@ -80,7 +86,6 @@ class Goods extends Controller
 
         $data['goods_name'] = input('goods_name');
         $data['goods_detail'] = input('goods_detail');
-        $data['goods_spec'] = input('goods_spec');
         $data['goods_price'] = input('goods_price');
         $data['goods_img'] = input('goods_img');
         $data['detail_img'] = input('detail_img');
@@ -91,12 +96,11 @@ class Goods extends Controller
 
         $specData = json_decode(input('goods_spec'), true);
 
-
-        foreach ($data as $k => $v) {
-            if (empty($v)) {
-                return return_info(300, '请填写完整信息');
-            }
-        }
+//        foreach ($data as $k => $v) {
+//            if (empty($v)) {
+//                return return_info(300, '请填写完整信息');
+//            }
+//        }
         if (!empty($goods_common_id)) {
             // 修改
             $res = $this->goods_common_model->updateDate($data);
@@ -107,14 +111,21 @@ class Goods extends Controller
 
         } else {
             // 添加
-            $res = $this->goods_common_model->insertData($data);
+            $res_goods_common_id = $this->goods_common_model->addGetId($data);
 
-
-            if (!$res) {
+            if (!$res_goods_common_id) {
                 return return_info(300, '添加失败');
             }
 
-            $goodsSpec = $this->goods_spec_model->insertAllData($specData);
+            foreach ($specData as $k=>$v) {
+//                $specData[$k]['goods_spec'] = serialize($specData[$k]['goods_spec']);
+                $specData[$k]['goods_name'] = input('goods_name');
+                $specData[$k]['goods_img'] = '123123';
+                $specData[$k]['goods_sales'] = '9';
+                $specData[$k]['goods_common_id'] = $res_goods_common_id;
+            }
+
+            $goodsSpec = $this->goods_model->insertAllData($specData);
             if ($goodsSpec) {
                 return return_info(200, 'success');
             } else {
