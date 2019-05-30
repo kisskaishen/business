@@ -13,5 +13,5 @@ use app\index\model\BaseModel;
 class OrderModel extends BaseModel
 {
     protected $pk = 'order_id';
-    protected $table = 'order';
+    protected $table = 'wap_order';
 }

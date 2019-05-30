@@ -62,19 +62,22 @@ class Order extends Controller
         $user_id = input('user_id');
         $address_id = input('address_id');
 
-        $goods_id = input('goods_id');
-        $goods_number = input('goods_number');
+        $goods_list = input('goods_list');
+        $pay_money = input('pay_money');
+        $goods_list = json_decode($goods_list);
         try {
             Db::startTrans();           // 开启事务
-//            $this->order_logic->check_login($user_id);
+            $this->order_logic->check_login($user_id);
             $this->order_logic->check_address($address_id);
-            $this->order_logic->check_goods($goods_id, $goods_number);
+            $this->order_logic->check_goods($goods_list);
             Db::commit();       // 事务提交
         } catch (\Exception $e) {
             Db::rollback();
-            return return_info(300, $e->getMessage());
+            return return_info(300,$e->getMessage().$e->getFile().$e->getLine());
         }
 
-        $this->order_logic->create_order();
+        $res = $this->order_logic->create_order($pay_money);
+        return return_info(200, '下单成功～', $res);
+
     }
 }
