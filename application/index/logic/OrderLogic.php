@@ -20,7 +20,7 @@ use think\Db;
 class OrderLogic
 {
     private $user_id = 0;
-    private $goods_id = 0;       // 商品id
+    private $goods_id = [];       // 商品id列表
     private $address = '';       // 收货地址
     private $pay_sn = '';          // 支付单号
     private $order_id = '';         // 订单id
@@ -70,26 +70,26 @@ class OrderLogic
      */
     public function check_goods($goods_list)
     {
+        $goods_arr_id = [];
+        $goods_arr_number = [];
 
-        foreach ($goods_list as $k=>$v) {
-            $where = [];
-            var_dump($v);               // 打印出了两个字符串=>string(4) "14|1" string(4) "15|2"
-
-////            $goods_list[$k]['goods_id'] = explode('|',$v)[0];
-            $where[] = ['goods_id', '=', explode('|',$v)];
-            var_dump($where);           // 打印出14/15对应的$where
-            $is_exist = $this->goods_model->where($where)->find(); // 当加了这行之后就只有goods_id为14的，然后报错
-            var_dump('|||||||||');
-            var_dump($is_exist);
-//            if (!$is_exist) {
-//                throw new \Exception("商品不存在");
-//            }
-//            if (explode('|',$v)[1] > $is_exist['goods_stock']) {
-//                throw new \Exception("库存不足");
-//            }
+        foreach ($goods_list as $k => $v) {
+            array_push($goods_arr_id,explode('|',$v)[0]);
+            array_push($goods_arr_number,explode('|',$v)[1]);
         }
-//        $this->goods_id
-//        return true;
+        $goods_arr_id_str = implode(',',$goods_arr_id);
+        $this->goods_id = $goods_arr_id_str;
+        $where[] = ['goods_id','in',$goods_arr_id_str];
+        $get_goods_list = $this->goods_model->getList($where);
+        foreach ($get_goods_list as $k=>$v) {
+            foreach ($goods_arr_number as $kk=>$vv) {
+                if ($k==$kk) {
+                    if ($v['goods_stock']<$vv) {
+                        throw new \Exception('商品库存不足');
+                    }
+                }
+            }
+        }
 
     }
 
@@ -124,7 +124,6 @@ class OrderLogic
         $order_pay = [];
         $order_pay['pay_sn'] = $pay_sn;
         $order_pay['pay_money'] = $pay_money;
-        $order_pay['goods_id'] = $this->goods_id;
         $order_pay['user_id'] = $this->user_id;
 
         $pay_id = $this->pay_model->insertData($order_pay);         // 数据保存到pay库里面
@@ -135,17 +134,18 @@ class OrderLogic
         $order_info['order_sn'] = $order_sn;
         $order_info['user_id'] = $this->user_id;
         $order_info['pay_sn'] = $pay_sn;
-        $order_info['goods_id'] = $this->goods_id;
         $order_info['order_money'] = $pay_money;
 
         $order_res = $this->order_model->insertGetId($order_info);         // 数据保存到order库里面
 
 
         // 保存商品
-        $where[] = ['goods_id','=',$this->goods_id];
-        $goods_res = $this->goods_model->where($where)->field('goods_sales,goods_detail,goods_stock',true)->find()->toArray();
-        $goods_res['order_id'] = $order_res;
-        $order_goods_res = $this->order_goods_model->insertData($goods_res);      // 数据保存到order_goods库里面
+        $where[] = ['goods_id', 'in', $this->goods_id];
+        $goods_res = $this->goods_model->where($where)->field('goods_sales,goods_detail,goods_stock', true)->select()->toArray();
+        foreach ($goods_res as $k=>$v) {
+            $goods_res[$k]['order_id'] = $order_res;
+        }
+        $order_goods_res = $this->order_goods_model->insertAllData($goods_res);      // 数据保存到order_goods库里面
         if (!$order_goods_res) {
             return false;
         }
